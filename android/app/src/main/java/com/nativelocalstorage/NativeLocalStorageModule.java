@@ -31,7 +31,7 @@ public class NativeLocalStorageModule extends ReactContextBaseJavaModule {
     private static final String TAG2 = "Protco Broadcaster";
 
 
-    public static  String groupId;
+
     public NativeLocalStorageModule(ReactApplicationContext reactContext) {
         super(reactContext);
     }
@@ -61,9 +61,12 @@ public class NativeLocalStorageModule extends ReactContextBaseJavaModule {
             // checking condition that not all Bluetooth-enabled devices support BLE advertising.
             // Some devices might only support classic Bluetooth or BLE scanning but not advertising.
 
-            advertiser = adapter.getBluetoothLeAdvertiser();
             if (advertiser == null) {
-                promise.reject("ADVERTISING_UNSUPPORTED", "Bluetooth LE advertising not supported");
+                advertiser = adapter.getBluetoothLeAdvertiser();
+            }
+
+            if (advertiser == null) {
+                 promise.reject("ADVERTISING_UNSUPPORTED", "Bluetooth LE advertising not supported");
                 return;
             }
 
@@ -95,18 +98,18 @@ public class NativeLocalStorageModule extends ReactContextBaseJavaModule {
                 @Override
                 public void onAdvertisingSetStarted(AdvertisingSet advertisingSet, int txPower, int status) {
                     Log.i(TAG2, "Advertising started: txPower=" + txPower + ", status=" + status);
-                    Log.i(TAG2, "Protco Broadcasting Started: txPower=" + data.toString());
+                    Log.i(TAG2, "Protco Broadcasting Started: txPower=" );
                     if (status == AdvertisingSetCallback.ADVERTISE_SUCCESS) {
                         currentAdvertisingSet = advertisingSet;
 
-                        // Adding handler for to stop broadcasting in 3 sec (change time as u want)
-                        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
-                            stopAdvertising(promise);
-                        }, 10000);
+//                        // Adding handler for to stop broadcasting in 3 sec (change time as u want)
+//                        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+//                            stopAdvertising(promise);
+//                        }, 10000);
+                     promise.resolve(null);
 
-                        promise.resolve(null);
-
-                    } else {
+                    }
+                    else {
                         promise.reject("ADVERTISING_START_FAILED", "Advertising start failed: " + status);
                         Log.e(TAG2, "Advertising start failed: " + status);
                     }
@@ -131,6 +134,7 @@ public class NativeLocalStorageModule extends ReactContextBaseJavaModule {
             promise.reject("ERROR", "Error starting advertising: " + e.getMessage());
             Log.e(TAG, "Error in startAdvertising", e);
         }
+//        promise.resolve(true);
     }
     private static AdvertisingSetParameters getAdvertisingSetParameters() {
         AdvertisingSetParameters parameters = null;
@@ -168,12 +172,6 @@ public class NativeLocalStorageModule extends ReactContextBaseJavaModule {
                 currentAdvertisingSet.setAdvertisingData(offAdvertiseData);
                 Log.i(TAG, "Passing  OFF data before stopping advertising");
 
-                 //handler for stop , as after passing command then after how many second u want to light off
-                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
-                    advertiser.stopAdvertisingSet(advertisingCallback);
-                    currentAdvertisingSet = null;
-                    Log.i(TAG, "Advertising stopped  after OFF data");
-                }, 1000); // change time
 
             } else {
                 advertiser.stopAdvertisingSet(advertisingCallback);
