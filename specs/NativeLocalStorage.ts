@@ -9,7 +9,8 @@ export interface Spec extends TurboModule {
     stopAdvertising(): Promise<void>;
     startScanning(): Promise<boolean>;
     getScannedDevices(): Promise<Array<{ name: string; address: string }>>;
-  }
+    updateAdvertisingData(isDataOn: boolean): Promise<void>;  // Accepts a boolean to switch data on or off.
+}
 
 export default TurboModuleRegistry.getEnforcing<Spec>(
   'NativeLocalStorage',

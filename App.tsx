@@ -1,12 +1,6 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
 import React, { useState, useEffect } from 'react';
 import {
-  PermissionsAndroid, // Import PermissionsAndroid
+  PermissionsAndroid,
   Platform,
   Text,
   Button,
@@ -22,20 +16,20 @@ const App: React.FC = () => {
   const [advertising, setAdvertising] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scannedDevices, setScannedDevices] = useState<string[]>([]);
+  const [isAdvertisingDataOn, setIsAdvertisingDataOn] = useState(true); // NEW STATE
 
   useEffect(() => {
     requestBluetoothPermissions();
     if (Platform.OS === 'android') {
       try {
-        NativeLocalStorage?.isBluetoothEnabled().then(setBluetoothEnabled)
+        NativeLocalStorage?.isBluetoothEnabled().then(setBluetoothEnabled);
       } catch (error) {
-        console.log("UseEffect:",error)
+        console.log("UseEffect:", error);
       }
-      
     }
   }, []);
 
-  const requestBluetoothPermissions = async () => { // async operation Many operations in programming take time to complete.  Think of fetching data from a server, reading a file, or waiting for user input.  These operations are asynchronous – they don't block the rest of your code from running while they're in progress.
+  const requestBluetoothPermissions = async () => {
     if (Platform.OS === 'android') {
       try {
         const granted = await PermissionsAndroid.requestMultiple([
@@ -46,11 +40,9 @@ const App: React.FC = () => {
           PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
         ]);
 
-        
-
         const allGranted = Object.values(granted).every(result => result === PermissionsAndroid.RESULTS.GRANTED);
-        console.log("Granted:",granted)
-        console.log("allGranted",allGranted)
+        console.log("Granted:", granted);
+        console.log("allGranted", allGranted);
         if (allGranted) {
           setBluetoothEnabled(true);
         } else {
@@ -67,12 +59,12 @@ const App: React.FC = () => {
   };
 
   const startAdvertising = async () => {
-    if (bluetoothEnabled && advertising) return;  //( !bluetoothEnabled || advertising)
+    if (bluetoothEnabled && advertising) return;
     try {
-      const deviceName = " Akash";
       await NativeLocalStorage.startAdvertising();
       setAdvertising(true);
-      console.log("Starting Advertising with device name:", deviceName);
+      setIsAdvertisingDataOn(true); 
+      console.log("Starting Advertising");
     } catch (error) {
       console.error("Error starting advertising:", error);
       Alert.alert("Error", "Error starting advertising. Please try again.");
@@ -80,7 +72,7 @@ const App: React.FC = () => {
   };
 
   const stopAdvertising = async () => {
-    if (!bluetoothEnabled || !advertising) return; // (!advertising)
+    if (!bluetoothEnabled || !advertising) return;
     try {
       await NativeLocalStorage.stopAdvertising();
       setAdvertising(false);
@@ -91,42 +83,51 @@ const App: React.FC = () => {
     }
   };
 
-  const startScanning = async () => {
-    if (bluetoothEnabled && scanning) return;
+  const toggleAdvertisingData = async () => {
+    if (!advertising) {
+      Alert.alert("Error", "You must start advertising first!");
+      return;
+    }
+    
     try {
-      setScanning(true);
-      setScannedDevices([]);
-      const devices = await NativeLocalStorage.startScanning();
-      console.log("Starting Scanning");
+      await NativeLocalStorage.updateAdvertisingData(!isAdvertisingDataOn);
+      setIsAdvertisingDataOn(!isAdvertisingDataOn);
+      console.log(`Advertising data updated to ${!isAdvertisingDataOn ? "OFF" : "ON"}`);
     } catch (error) {
-      console.error("Error starting scanning:", error);
-      Alert.alert("Error", "Error starting scanning. Please try again.");
+      console.error("Error updating advertising data:", error);
+      Alert.alert("Error", "Failed to update advertising data.");
     }
   };
-return (
-  <View>
-    <Button
-      title="Start Advertising"
-      onPress={startAdvertising}
-      disabled={advertising || !bluetoothEnabled}
-    />
-    <Button
-      title="Stop Advertising"
-      onPress={stopAdvertising}
-      disabled={!advertising}
-    />
-    <Button
-      title="Start Scanning"
-      onPress={startScanning}
-      disabled={scanning || !bluetoothEnabled}
-    />
-    
-    <Text>Scanned Devices:</Text>
-    {scannedDevices.map((device, index) => (
-      <Text key={index}>{device}</Text>
-    ))}
-  </View>
-);
+
+  return (
+    <View>
+      <Button
+        title="Start Advertising"
+        onPress={startAdvertising}
+        disabled={advertising || !bluetoothEnabled}
+      />
+      <Button
+        title="Stop Advertising"
+        onPress={stopAdvertising}
+        disabled={!advertising}
+      />
+      <Button
+        title="Start Scanning"
+        onPress={() => console.log("Scanning not implemented")}
+        disabled={scanning || !bluetoothEnabled}
+      />
+      <Button
+        title={isAdvertisingDataOn ? "Set Advertising Data to OFF" : "Set Advertising Data to ON"}
+        onPress={toggleAdvertisingData}
+        disabled={!advertising}
+      />
+      
+      <Text>Scanned Devices:</Text>
+      {scannedDevices.map((device, index) => (
+        <Text key={index}>{device}</Text>
+      ))}
+    </View>
+  );
 };
 
 export default App;
